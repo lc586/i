@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>故事墙 - 分享你的故事</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh; overflow-x: hidden; color: #fff;
+        }
+        .particles {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; overflow: hidden; z-index: 0;
+        }
+        .particle {
+            position: absolute; width: 4px; height: 4px;
+            background: rgba(255,255,255,0.3); border-radius: 50%;
+            animation: float 15s infinite;
+        }
+        @keyframes float {
+            0%,100% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+            10% { opacity: 1; } 90% { opacity: 1; }
+            100% { transform: translateY(-10vh) rotate(720deg); opacity: 0; }
+        }
+        .header {
+            position: relative; z-index: 10; text-align: center;
+            padding: 40px 20px 20px;
+        }
+        .header h1 {
+            font-size: 3rem; font-weight: 700;
+            background: linear-gradient(90deg, #e94560, #ff6b6b, #feca57);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text; margin-bottom: 10px; letter-spacing: 2px;
+        }
+        .header p { color: rgba(255,255,255,0.7); font-size: 1.1rem; margin-bottom: 30px; }
+        .story-wall-container {
+            position: relative; z-index: 5; height: 60vh; overflow: hidden;
+            mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%);
+            -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%);
+        }
+        .story-wall {
+            display: flex; flex-wrap: wrap; gap: 15px; padding: 20px;
+            animation: scrollUp 30s linear infinite;
+        }
+        @keyframes scrollUp { 0% { transform: translateY(0); } 100% { transform: translateY(-50%); } }
+        .story-card {
+            background: rgba(255,255,255,0.08); backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1); border-radius: 16px;
+            padding: 16px 20px; max-width: 320px; min-width: 260px;
+            transition: all 0.3s ease; animation: fadeIn 0.5s ease;
+        }
+        .story-card:hover {
+            transform: translateY(-5px) scale(1.02);
+            background: rgba(255,255,255,0.15);
+            border-color: rgba(233,69,96,0.5);
+            box-shadow: 0 10px 40px rgba(233,69,96,0.2);
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .story-author { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+        .avatar {
+            width: 36px; height: 36px; border-radius: 50%;
+            background: linear-gradient(135deg, #e94560, #ff6b6b);
+            display: flex; align-items: center; justify-content: center;
+            font-weight: bold; font-size: 14px; color: white;
+        }
+        .author-name { font-weight: 600; color: #e94560; font-size: 0.95rem; }
+        .story-time { font-size: 0.75rem; color: rgba(255,255,255,0.4); margin-left: auto; }
+        .story-content { color: rgba(255,255,255,0.85); line-height: 1.6; font-size: 0.9rem; }
+        .post-section { position: relative; z-index: 10; max-width: 600px; margin: 20px auto; padding: 0 20px; }
+        .post-card {
+            background: rgba(255,255,255,0.05); backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.1); border-radius: 20px;
+            padding: 30px; box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .post-card h2 { text-align: center; margin-bottom: 20px; font-size: 1.5rem; color: #fff; }
+        .input-group { margin-bottom: 15px; }
+        .input-group label { display: block; margin-bottom: 8px; color: rgba(255,255,255,0.7); font-size: 0.9rem; }
+        .input-group input, .input-group textarea {
+            width: 100%; padding: 12px 16px;
+            border: 1px solid rgba(255,255,255,0.15); border-radius: 12px;
+            background: rgba(255,255,255,0.05); color: #fff;
+            font-size: 1rem; font-family: inherit;
+            transition: all 0.3s ease; outline: none;
+        }
+        .input-group input:focus, .input-group textarea:focus {
+            border-color: #e94560; background: rgba(255,255,255,0.1);
+            box-shadow: 0 0 20px rgba(233,69,96,0.2);
+        }
+        .input-group input::placeholder, .input-group textarea::placeholder { color: rgba(255,255,255,0.3); }
+        .input-group textarea { min-height: 100px; resize: vertical; }
+        .submit-btn {
+            width: 100%; padding: 14px; border: none; border-radius: 12px;
+            background: linear-gradient(135deg, #e94560, #ff6b6b);
+            color: white; font-size: 1.1rem; font-weight: 600;
+            cursor: pointer; transition: all 0.3s ease;
+        }
+        .submit-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(233,69,96,0.4); }
+        .submit-btn:active { transform: translateY(0); }
+        .stats { text-align: center; padding: 20px; color: rgba(255,255,255,0.5); font-size: 0.9rem; }
+        .stats span { color: #e94560; font-weight: 600; }
+        @media (max-width: 768px) {
+            .header h1 { font-size: 2rem; }
+            .story-card { max-width: 100%; min-width: unset; width: 100%; }
+            .story-wall { flex-direction: column; }
+        }
+        .story-card.new { animation: highlight 1s ease; }
+        @keyframes highlight {
+            0% { box-shadow: 0 0 0 0 rgba(233,69,96,0.7); }
+            70% { box-shadow: 0 0 0 20px rgba(233,69,96,0); }
+            100% { box-shadow: 0 0 0 0 rgba(233,69,96,0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="particles" id="particles"></div>
+    <div class="header">
+        <h1>✨ 故事墙</h1>
+        <p>在这里，每一个故事都值得被倾听</p >
+    </div>
+    <div class="story-wall-container">
+        <div class="story-wall" id="storyWall"></div>
+    </div>
+    <div class="post-section">
+        <div class="post-card">
+            <h2>📝 分享你的故事</h2>
+            <div class="input-group">
+                <label for="authorName">你的名字</label>
+                <input type="text" id="authorName" placeholder="怎么称呼你？" maxlength="20">
+            </div>
+            <div class="input-group">
+                <label for="storyContent">你的故事</label>
+                <textarea id="storyContent" placeholder="写下你想分享的故事、心情或想说的话..." maxlength="500"></textarea>
+            </div>
+            <button class="submit-btn" onclick="postStory()">发布故事</button>
+        </div>
+    </div>
+    <div class="stats">已有 <span id="storyCount">0</span> 个故事被分享</div>
+    <script>
+        const initialStories = [
+            { name: "小雨", content: "今天下班路上看到一只橘猫在晒太阳，突然就觉得生活很美好。", time: "2分钟前" },
+            { name: "阿杰", content: "终于学会了做红烧肉，虽然卖相一般，但味道还不错，爸妈吃得很开心。", time: "5分钟前" },
+            { name: "林深", content: "昨晚梦见回到了高中教室，阳光透过窗户洒在课桌上，醒来才发现已经毕业十年了。", time: "8分钟前" },
+            { name: "橙子", content: "养了一盆多肉，三个月了居然还活着，这大概是我养过最久的植物了。", time: "12分钟前" },
+            { name: "北风", content: "一个人去看了电影，买了爆米花和可乐，发现原来独处也可以很浪漫。", time: "15分钟前" },
+            { name: "夏末", content: "奶奶教会了我织围巾，虽然针脚歪歪扭扭的，但她一直说好看。", time: "18分钟前" },
+            { name: "远山", content: "凌晨四点起床去爬山看日出，虽然很累，但当太阳升起的那一刻，一切都值得。", time: "22分钟前" },
+            { name: "薄荷", content: "在旧书店淘到了一本1998年出版的诗集，扉页上有人写了一句\"愿你永远年轻\"。", time: "25分钟前" },
+            { name: "星辰", content: "今天帮一位老奶奶过马路，她握着我的手说了好多次谢谢，心里暖暖的。", time: "30分钟前" },
+            { name: "浅唱", content: "下雨天窝在家里看书，窗外雨声淅沥，猫咪在脚边打呼噜，这就是幸福吧。", time: "35分钟前" },
+            { name: "追光者", content: "坚持跑步第100天了，从一开始跑500米就喘，到现在能跑5公里，感觉自己变强了。", time: "40分钟前" },
+            { name: "晚风", content: "和多年未见的老朋友重逢，发现即使很久没联系，聊起天来还是像从前一样。", time: "45分钟前" },
+            { name: "晴天", content: "今天是自己生日，没有蛋糕没有派对，但给自己买了一束向日葵，祝自己生日快乐。", time: "50分钟前" },
+            { name: "墨白", content: "在咖啡馆写了一下午的小说，虽然不知道会不会有人看，但写作的过程本身就很快乐。", time: "1小时前" },
+            { name: "落叶", content: "秋天到了，银杏叶开始变黄，每年这个时候都会去那条街拍照，今年也不例外。", time: "1小时前" },
+            { name: "海浪", content: "第一次带爸妈去海边，妈妈像个孩子一样在沙滩上捡贝壳，爸爸则一直拍照。", time: "2小时前" },
+            { name: "萤火", content: "加班到很晚，出公司发现保安大叔还在值班，他笑着说\"辛苦了，路上小心\"。", time: "2小时前" },
+            { name: "云端", content: "学会了做提拉米苏，第一次做就成功了，分给邻居们吃，大家都说好吃。", time: "3小时前" },
+            { name: "归途", content: "坐绿皮火车回家，看着窗外风景慢慢后退，感觉时间都慢了下来。", time: "3小时前" },
+            { name: "晨曦", content: "今天开始学吉他了，手指按弦很疼，但想到以后能弹唱自己喜欢的歌，就充满了动力。", time: "4小时前" }
+        ];
+
+        let stories = [...initialStories];
+
+        function getAvatarColor(name) {
+            const colors = [
+                ['#e94560','#ff6b6b'],['#feca57','#ff9ff3'],['#54a0ff','#5f27cd'],
+                ['#48dbfb','#0abde3'],['#1dd1a1','#10ac84'],['#ff9f43','#ee5a24'],
+                ['#ff6b6b','#c44569'],['#a29bfe','#6c5ce7']
+            ];
+            let hash = 0;
+            for (let i = 0; i < name.length; i++) {
+                hash = name.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            return colors[Math.abs(hash) % colors.length];
+        }
+
+        function createStoryCard(story, isNew = false) {
+            const colors = getAvatarColor(story.name);
+            const card = document.createElement('div');
+            card.className = 'story-card' + (isNew ? ' new' : '');
+            card.innerHTML = `
+                <div class="story-author">
+                    <div class="avatar" style="background: linear-gradient(135deg, ${colors[0]}, ${colors[1]})">
+                        ${story.name.charAt(0)}
+                    </div>
+                    <span class="author-name">${story.name}</span>
+                    <span class="story-time">${story.time}</span>
+                </div>
+                <div class="story-content">${story.content}</div>
+            `;
+            return card;
+        }
+
+        function renderStories() {
+            const wall = document.getElementById('storyWall');
+            wall.innerHTML = '';
+            const allStories = [...stories, ...stories];
+            allStories.forEach(story => {
+                wall.appendChild(createStoryCard(story));
+            });
+            document.getElementById('storyCount').textContent = stories.length;
+        }
+
+        function postStory() {
+            const nameInput = document.getElementById('authorName');
+            const contentInput = document.getElementById('storyContent');
+            const name = nameInput.value.trim();
+            const content = contentInput.value.trim();
+
+            if (!name) { alert('请输入你的名字'); return; }
+            if (!content) { alert('请输入你的故事'); return; }
+
+            const newStory = { name: name, content: content, time: "刚刚" };
+            stories.unshift(newStory);
+
+            const wall = document.getElementById('storyWall');
+            const card = createStoryCard(newStory, true);
+            wall.insertBefore(card, wall.firstChild);
+
+            document.getElementById('storyCount').textContent = stories.length;
+            nameInput.value = '';
+            contentInput.value = '';
+            showToast('故事发布成功！');
+        }
+
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.style.cssText = `
+                position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+                background: rgba(233,69,96,0.9); color: white; padding: 12px 24px;
+                border-radius: 25px; font-size: 0.95rem; z-index: 1000;
+                animation: fadeIn 0.3s ease; backdrop-filter: blur(10px);
+            `;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.5s';
+                setTimeout(() => toast.remove(), 500);
+            }, 2000);
+        }
+
+        function createParticles() {
+            const container = document.getElementById('particles');
+            for (let i = 0; i < 50; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 15 + 's';
+                particle.style.animationDuration = (10 + Math.random() * 20) + 's';
+                particle.style.width = particle.style.height = (2 + Math.random() * 4) + 'px';
+                container.appendChild(particle);
+            }
+        }
+
+        document.getElementById('storyContent').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && e.ctrlKey) { postStory(); }
+        });
+
+        renderStories();
+        createParticles();
+    </script>
+</body>
+</html>
